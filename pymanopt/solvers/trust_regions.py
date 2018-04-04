@@ -95,7 +95,7 @@ class TrustRegions(Solver):
         self.rho_regularization = rho_regularization
 
     def solve(self, problem, x=None, mininner=1, maxinner=None,
-              Delta_bar=None, Delta0=None):
+              Delta_bar=None, Delta0=None, callback=None):
         man = problem.manifold
         verbosity = problem.verbosity
 
@@ -344,10 +344,14 @@ class TrustRegions(Solver):
                 fx = fx_prop
                 fgradx = grad(x)
                 norm_grad = man.norm(x, fgradx)
+                
+                # Callback:
+                if callback is not None: 
+                	callback(x)
             else:
                 # accept = False
                 accstr = "REJ"
-
+			
             # k is the number of iterations we have accomplished.
             k = k + 1
 
@@ -488,11 +492,11 @@ class TrustRegions(Solver):
 
             # No negative curvature and eta_prop inside TR: accept it.
             e_Pe = e_Pe_new
-            new_eta = eta + alpha * delta
+            new_eta = eta + delta * alpha
 
             # If only a nonlinear Hessian approximation is available, this is
             # only approximately correct, but saves an additional Hessian call.
-            new_Heta = Heta + alpha * Hdelta
+            new_Heta = Heta + Hdelta * alpha
 
             # Verify that the model cost decreased in going from eta to
             # new_eta. If it did not (which can only occur if the Hessian
@@ -510,7 +514,7 @@ class TrustRegions(Solver):
             model_value = new_model_value
 
             # Update the residual.
-            r = r + alpha * Hdelta
+            r = r + Hdelta * alpha
 
             # Compute new norm of r.
             r_r = inner(x, r, r)
@@ -543,7 +547,7 @@ class TrustRegions(Solver):
 
             # Compute new search direction
             beta = z_r / zold_rold
-            delta = -z + beta * delta
+            delta = -z + delta * beta
 
             # Update new P-norms and P-dots [CGT2000, eq. 7.5.6 & 7.5.7].
             e_Pd = (e_Pd + d_Pd * alpha) * beta
